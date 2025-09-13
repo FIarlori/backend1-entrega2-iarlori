@@ -11,19 +11,33 @@ class ProductManager {
 
     async init() {
         try {
-            await fs.access(this.path);
+            const dir = path.dirname(this.path);
+            await fs.mkdir(dir, { recursive: true });
+            
+            try {
+                await fs.access(this.path);
+            } catch (error) {
+                await fs.writeFile(this.path, JSON.stringify([], null, 2));
+            }
+
             const data = await fs.readFile(this.path, 'utf-8');
             this.products = JSON.parse(data);
             if (this.products.length > 0) {
                 this.lastId = Math.max(...this.products.map(p => typeof p.id === 'number' ? p.id : 0));
             }
         } catch (error) {
-            await this.saveProducts();
+            console.error('Error inicializando ProductManager:', error);
+            throw error;
         }
     }
 
     async saveProducts() {
-        await fs.writeFile(this.path, JSON.stringify(this.products, null, 2));
+        try {
+            await fs.writeFile(this.path, JSON.stringify(this.products, null, 2));
+        } catch (error) {
+            console.error('Error guardando productos:', error);
+            throw error;
+        }
     }
 
     generateId() {

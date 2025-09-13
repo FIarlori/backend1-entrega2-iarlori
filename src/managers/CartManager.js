@@ -1,31 +1,45 @@
 const fs = require('fs/promises');
 const path = require('path');
 const { ProductManager } = require('./ProductManager.js');
-const productManager = new ProductManager('./data/products.json');
 
 class CartManager {
-    constructor(filePath) {
+    constructor(filePath, productsFilePath) {
         this.path = filePath;
         this.carts = [];
         this.lastId = 0;
+        this.productManager = new ProductManager(productsFilePath);
         this.init();
     }
 
     async init() {
         try {
-            await fs.access(this.path);
+            const dir = path.dirname(this.path);
+            await fs.mkdir(dir, { recursive: true });
+            
+            try {
+                await fs.access(this.path);
+            } catch (error) {
+                await fs.writeFile(this.path, JSON.stringify([], null, 2));
+            }
+
             const data = await fs.readFile(this.path, 'utf-8');
             this.carts = JSON.parse(data);
             if (this.carts.length > 0) {
                 this.lastId = Math.max(...this.carts.map(c => typeof c.id === 'number' ? c.id : 0));
             }
         } catch (error) {
-            await this.saveCarts();
+            console.error('Error inicializando CartManager:', error);
+            throw error;
         }
     }
 
     async saveCarts() {
-        await fs.writeFile(this.path, JSON.stringify(this.carts, null, 2));
+        try {
+            await fs.writeFile(this.path, JSON.stringify(this.carts, null, 2));
+        } catch (error) {
+            console.error('Error guardando carritos:', error);
+            throw error;
+        }
     }
 
     generateId() {
@@ -52,8 +66,8 @@ class CartManager {
     }
 
     async addProductToCart(cartId, productId) {
-        await productManager.init();
-        const product = productManager.products.find(p => p.id == productId);
+        await this.productManager.init();
+        const product = this.productManager.products.find(p => p.id == productId);
         if (!product) {
             throw new Error('El producto no existe');
         }
