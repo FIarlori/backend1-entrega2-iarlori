@@ -1,40 +1,19 @@
-const express = require('express');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-const handlebars = require('express-handlebars');
-const path = require('path');
+const serverConfig = require('./config/server')();
+const app = serverConfig.app;
+const httpServer = serverConfig.httpServer;
+const io = serverConfig.io;
+const { port } = require('./config/environment');
+const registerRoutes = require('./routes');
+const { notFound, serverError } = require('./middleware/errorHandler');
+const ProductsService = require('./services/productsService');
 
-const productsRouter = require('./routes/products.router');
-const cartsRouter = require('./routes/carts.router');
-const viewsRouter = require('./routes/views.router');
-
-const ProductService = require('./services/products.service');
-
-const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer);
-const productService = new ProductService();
-
-app.engine('handlebars', handlebars.engine({
-    defaultLayout: false 
-}));
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'handlebars');
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
-
-app.set('io', io);
-
-app.use('/api/products', productsRouter);
-app.use('/api/carts', cartsRouter);
-app.use('/', viewsRouter);
+registerRoutes(app);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'Backend en funcionamiento', timestamp: new Date().toISOString() });
+    res.json({ status: 'Backend en funcionamiento', timestamp: new Date().toISOString() });
 });
 
+const productService = new ProductsService();
 io.on('connection', async (socket) => {
     console.log('Cliente conectado');
     
@@ -70,7 +49,9 @@ io.on('connection', async (socket) => {
     });
 });
 
-const PORT = 8080;
-httpServer.listen(PORT, () => {
-    console.log(`Servidor escuchando en http://localhost:${PORT}`);
+app.use(notFound);
+app.use(serverError);
+
+httpServer.listen(port, () => {
+    console.log(`Servidor escuchando en http://localhost:${port}`);
 });

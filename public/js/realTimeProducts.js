@@ -19,7 +19,7 @@ function initialize() {
                     <strong>${product.title}</strong> - $${product.price}
                     <br>${product.description}
                     <br>Stock: ${product.stock} | Categoría: ${product.category}
-                    ${product.thumbnails ? `<br><img src="${product.thumbnails}" alt="${product.title}" width="50">` : ''}
+                    ${product.thumbnails ? `<br><img src="${product.thumbnails}" width="50">` : ''}
                 </div>
                 <button onclick="deleteProduct(${product.id})">Eliminar</button>
             `;

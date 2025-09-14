@@ -1,7 +1,7 @@
 const path = require('path');
-const { ProductManager } = require('../managers/ProductManager');
+const { ProductManager } = require('../utils/fileManager');
 
-class ProductService {
+class ProductsService {
     constructor() {
         const productsPath = path.join(__dirname, '../data/products.json');
         this.productManager = new ProductManager(productsPath);
@@ -28,4 +28,4 @@ class ProductService {
     }
 }
 
-module.exports = ProductService;
+module.exports = ProductsService;
